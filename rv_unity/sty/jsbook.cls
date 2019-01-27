@@ -1342,7 +1342,7 @@
     \@afterheading
   \fi}
 \def\@makechapterhead#1{%
-  \vspace*{2\Cvs}% 欧文は50pt
+%\vspace*{2\Cvs}% 欧文は50pt
   {\parindent \z@ \raggedright \normalfont
     \ifnum \c@secnumdepth >\m@ne
       \if@mainmatter
