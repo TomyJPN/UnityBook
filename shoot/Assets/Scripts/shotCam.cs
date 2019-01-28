@@ -7,7 +7,10 @@ public class ShotCam : MonoBehaviour {
 
   }
   void Update() {
-    getClickObject();
+    GameObject clickObject=getClickObject();
+    if (clickObject!=null && clickObject.gameObject.tag == "enemy") {
+      clickObject.transform.root.GetComponent<Animator>().enabled = false;
+    }
   }
   // 左クリックしたオブジェクトを取得する関数
   public GameObject getClickObject() {
@@ -17,9 +20,6 @@ public class ShotCam : MonoBehaviour {
       RaycastHit hit = new RaycastHit();
       if (Physics.SphereCast(ray, 0.1f, out hit)) {
         clickObject = hit.collider.gameObject;
-      }
-      if (clickObject.gameObject.tag == "enemy") {
-        Destroy(clickObject);   //オブジェクトの削除
       }
     }
     return clickObject;
