@@ -43,13 +43,13 @@ Terrainを使う前に，地面に適用するテクスチャや草木のデー�
 UnityのAsset Storeから「Standard Assets」で検索するとパッケージが出てくるのでダウンロードし，インポートします．
 インポート時に色々選択できますが，必要なテクスチャや草木データが入っている「Environment」のみでいいでしょう．
 
-//image[1_1][Standard Assets][scale=0.8]{
+//image[1_1][Standard Assets][scale=0.5]{
 //}
 
 === Terrainの設置
 「Hierarchy」の「Create」から「3D Object>Terrain」で作ります．
 「Inspector」の「Terrain」で設定ができ，「Paint Texture」を選択し「Edit Terrain Layers」から草のテクスチャ画像を指定しましょう．
-//image[1_2][草テクスチャの指定][scale=0.8]{
+//image[1_2][草テクスチャの指定][scale=0.7]{
 //}
 
 == 敵(ゾンビ)の用意
@@ -60,33 +60,48 @@ UnityのAsset Storeから「Standard Assets」で検索するとパッケージ�
 
 === ゾンビのモデルをインポート
 Asset Storeで「zombie」と検索すると出てくる一番人気のアセットをインポートします．
-
+//image[1_3][ゾンビの素材][scale=0.8]{
+//}
 筆者はこの時なぜかインポートしたファイル名の一つが大文字小文字の区別に関するエラーが出てきたので手動で修正しました．
 
-「GameObject>3D Object>Ragdoll...」で出てくるCreate Ragdollにドラッグアンドドロップで体のパーツを当てはめていく
+=== ゾンビの死体を作る
+恐ろしい小見出し名ですが，ゾンビを撃った後に物理法則に従って倒れるようにラグドールを適用します．
+インポートしたアセットのPrefabsというフォルダにゾンビのプレハブがあるのでシーンに追加し，メニューの
+「GameObject>3D Object>Ragdoll...」からCreate Ragdollウィンドウを開きます．
 
-図
+頭，腕，足など指定するためシーンのゾンビの階層を展開してドラッグアンドドロップで一つずつ体のパーツを当てはめていきます．
+//image[1_5][ラグドールの設定][scale=1]{
+//}
 
 enemyタグ付ける
 
 
-== シューティングのスクリプトを書く
+== ゾンビを撃つスクリプトを書く
 ここでゲームの動作部分になるプログラムを作ります．「ShotCam」という名前でスクリプトを新規作成し@<fn>{script}，以下のコードを書きます．
+
+スクリプトはMain Cameraにアタッチします．
 //footnote[script][UnityではC#の他JavaScript,Booといったプログラミング言語を使えましたが，廃止となっています．]
 //emlist[ShotCam.cs][c#]{
-  public class ShotCam : MonoBehaviour {
+public class ShotCam : MonoBehaviour {
   void Start() {
   }
   void Update() {
     GameObject clickObject=getClickObject();
+    //クリックしたのが敵なら
     if (clickObject!=null && clickObject.gameObject.tag == "enemy") {
-      clickObject.transform.root.GetComponent<Animator>().enabled = false;
+      //アニメーション無効
+      clickObject.transform.root.GetComponent<Animator>().enabled = false;  
+      Vector3 vec = clickObject.transform.position - this.transform.position;
+      //射撃した部位に力を加える
+      clickObject.GetComponent<Rigidbody>().velocity = vec.normalized*15;
+      //ゾンビ側のスクリプトのdeath()呼び出し
+      clickObject.transform.root.GetComponent<Zombie>().death();  
     }
   }
   // 左クリックしたオブジェクトを取得する関数
   public GameObject getClickObject() {
     GameObject clickObject = null;
-    if (Input.GetMouseButtonDown(0)) {
+    if (Input.GetMouseButtonDown(0)) {  //左クリック
       Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
       RaycastHit hit = new RaycastHit();
       if (Physics.SphereCast(ray, 0.1f, out hit)) {
@@ -98,16 +113,13 @@ enemyタグ付ける
 }
 //}
 
-= Re:Viewのテスト
+続いてゾンビのオブジェクト(一番上の階層)にZombieというスクリプトを作成し以下のクラスを追加しアタッチします．
 
-//emlistnum[ハロワ][c#]{
-private string str="Hello World";
-console.Log(str);
-//}
-
-ぼくのついったー@<fn>{site}
-//footnote[site][https://twitter.com/Tomy_0331]
-
-//image[1_1_1][図の名前][scale=0.5]{
-    これはなに？？？
+//emlist[Zombie.cs][c#]{
+  public void death() {
+    Invoke("destroyObject", 5f);　//5秒後に実行
+  }
+  void destroyObject() {
+    Destroy(gameObject);  //オブジェクトを消す
+  }
 //}
