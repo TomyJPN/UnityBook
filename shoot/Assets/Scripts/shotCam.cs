@@ -10,6 +10,9 @@ public class ShotCam : MonoBehaviour {
     GameObject clickObject=getClickObject();
     if (clickObject!=null && clickObject.gameObject.tag == "enemy") {
       clickObject.transform.root.GetComponent<Animator>().enabled = false;
+      //clickObject.GetComponent<Rigidbody>().AddForce(new Vector3(1000f,0,0));
+      Vector3 vec = clickObject.transform.position - this.transform.position;
+      clickObject.GetComponent<Rigidbody>().velocity = vec.normalized*10;
     }
   }
   // 左クリックしたオブジェクトを取得する関数
