@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.AI;
 
 public class ShotCam : MonoBehaviour {
   void Start() {
@@ -12,6 +13,7 @@ public class ShotCam : MonoBehaviour {
       //アニメーション無効
       clickObject.transform.root.GetComponent<Animator>().enabled = false;  
       Vector3 vec = clickObject.transform.position - this.transform.position;
+      clickObject.transform.root.GetComponent<NavMeshAgent>().enabled = false;
       //射撃した部位に力を加える
       clickObject.GetComponent<Rigidbody>().velocity = vec.normalized*15;
       //ゾンビ側のスクリプトのdeath()呼び出し
@@ -27,6 +29,7 @@ public class ShotCam : MonoBehaviour {
       if (Physics.SphereCast(ray, 0.1f, out hit)) {
         clickObject = hit.collider.gameObject;
       }
+      Debug.Log(clickObject);
     }
     return clickObject;
   }
