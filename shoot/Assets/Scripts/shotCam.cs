@@ -13,7 +13,7 @@ public class ShotCam : MonoBehaviour {
       //アニメーション無効
       clickObject.transform.root.GetComponent<Animator>().enabled = false;  
       Vector3 vec = clickObject.transform.position - this.transform.position;
-      clickObject.transform.root.GetComponent<NavMeshAgent>().enabled = false;
+      //clickObject.transform.root.GetComponent<NavMeshAgent>().enabled = false;
       //射撃した部位に力を加える
       clickObject.GetComponent<Rigidbody>().velocity = vec.normalized*15;
       //ゾンビ側のスクリプトのdeath()呼び出し
