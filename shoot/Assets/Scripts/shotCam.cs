@@ -10,14 +10,11 @@ public class ShotCam : MonoBehaviour {
     GameObject clickObject=getClickObject();
     //クリックしたのが敵なら
     if (clickObject!=null && clickObject.gameObject.tag == "enemy") {
-      //アニメーション無効
-      clickObject.transform.root.GetComponent<Animator>().enabled = false;  
       Vector3 vec = clickObject.transform.position - this.transform.position;
-      //clickObject.transform.root.GetComponent<NavMeshAgent>().enabled = false;
       //射撃した部位に力を加える
       clickObject.GetComponent<Rigidbody>().velocity = vec.normalized*30;
       //ゾンビ側のスクリプトのdeath()呼び出し
-      clickObject.transform.root.GetComponent<Zombie>().death();  
+      clickObject.transform.root.GetComponent<Zombie>().death();
     }
   }
   // 左クリックしたオブジェクトを取得する関数
