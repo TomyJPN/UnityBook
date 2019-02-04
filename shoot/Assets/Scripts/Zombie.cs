@@ -17,11 +17,9 @@ public class Zombie : MonoBehaviour {
     animator = GetComponent<Animator>();
   }
   void Update() {
-    Vector3 p;
-    
     if (!stop && Vector3.Distance(camera.transform.position, this.transform.position) < 2f) {
       animator.SetInteger("state", (int)state.idle);
-      p = camera.transform.position;
+      Vector3 p = camera.transform.position;
       p.y = this.transform.position.y;
       transform.LookAt(p);
       agent.isStopped = stop = true;

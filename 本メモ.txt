@@ -1,0 +1,12 @@
+New>project name:shoot,template:3d>Create project
+起動
+
+sampleSceneをmainSceneに名前変更(Projectからassets>Scenes>SampleSceneをRename)
+
+Terrainを設置
+standerd assetsのインポート(environmentとparticle,カメラのみ)
+コミット
+terrainの設置(standard assetからテクスチャを適用)
+
+
+War FXのインポート
