@@ -4,6 +4,7 @@ using UnityEngine;
 using UnityEngine.AI;
 
 public class ShotCam : MonoBehaviour {
+  public GameObject hitEffect;
   void Start() {
   }
   void Update() {
@@ -25,6 +26,7 @@ public class ShotCam : MonoBehaviour {
       RaycastHit hit = new RaycastHit();
       if (Physics.SphereCast(ray, 0.1f, out hit)) {
         clickObject = hit.collider.gameObject;
+        Instantiate(hitEffect, hit.point, Quaternion.identity);   //着弾点にエフェクト
       }
       Debug.Log(clickObject);
     }

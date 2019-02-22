@@ -6,14 +6,17 @@
 この本では「Unityでサンプルゲームは作ってみたけどそれからどうしたらいいかわからない」
 「入門レベルより少しクオリティの高いゲームを作ってみたい」，というようなUnity初心者～中級者手前の人をターゲットにしています．
 
-なお，この本では画面の見方や操作など基本的な部分の説明は省略することが多いです．
-またプログラミングは制御文，関数，クラスなどの基本文法も説明を省かせていただくので分からない場合適宜調べるか一度入門サイトでミニゲームを作ってみることをおすすめします．
+また，文化祭などで"映える"アーケードゲームを作ることをメインとしています．Wiiリモコンを使ったシンプルな操作性は
+子どもでも遊びやすくウケがいいです(体験談)．
+
+なお，この本ではUnity画面の見方や操作など基本的な部分の説明は省略することが多いです．
+プログラミングはC#における基本文法も説明を省かせていただくので分からない場合適宜調べるか一度入門サイトでミニゲームを作ってみることをおすすめします．
 
 == 開発環境
 以下の環境・ソフトで開発しました．
 
 : Windows10
- 一般的なOS．UnityはMac版でも操作は基本的に同じですが，今回のテーマのアーケード制作においてWiiリモコンやペダルの入力をMacでは方法を載せていませんのでご了承ください．Linuxも同様です．
+ 一般的なOS．UnityはMac版でも操作は基本的に同じですが，今回使うWiiリモコンやペダルのMacでの入力方法は対象外とさせてもらうのでご了承ください．Linuxも同様です．
 
 : Unity2018.3.2f1
  今回のメインで使うゲームエンジン．3Dゲームを作るのに最適で個人からゲーム会社まで広い場所で使われています．
@@ -57,10 +60,11 @@ UnityのAsset Storeから「Standard Assets」で検索するとパッケージ�
 Asset Storeで「zombie」と検索すると出てくる一番人気のアセットをインポートします．
 //image[1_3][ゾンビの素材][scale=0.8]{
 //}
-筆者はこの時なぜかインポートしたファイル名の一つが大文字小文字の区別に関するエラーが出てきたので手動で修正しました．
+筆者はこの時インポートしたファイル名の一つが大文字小文字の区別に関するエラーがなぜか出てきたので手動で修正しました．
 
 === ゾンビの死体を作る
-恐ろしい小見出し名ですが，ゾンビを撃った後に物理法則に従って倒れるようにラグドールを適用します．
+恐ろしい見出し名ですが，ゾンビを撃った後に物理法則に従って倒れるようにラグドールを適用します．
+ラグドールとは，洋ゲーとかで敵が死ぬとぐったり人形のように崩れていくアレです．
 インポートしたアセットのPrefabsというフォルダにゾンビのプレハブがあるのでシーンに追加し，メニューの
 「GameObject>3D Object>Ragdoll...」からCreate Ragdollウィンドウを開きます．
 
@@ -68,7 +72,13 @@ Asset Storeで「zombie」と検索すると出てくる一番人気のアセッ
 //image[1_5][ラグドールの設定][scale=1]{
 //}
 
-enemyタグ付ける
+=== タグを付ける
+この後ゾンビの撃つスクリプトを書きますが，プログラムで識別するためのタグをつけます．
+インスペクタの「Tag＞add tag」から「enemy」と名付けたタグを追加し，ゾンビのコライダがついているオブジェクト全てに適用しましょう．
+階層をshiftキーで推しながら複数選択してからTagを設定すると一度に付けることができます．
+//image[1_5_2][tagの設定][scale=1]{
+//}
+
 
 
 == ゾンビを撃つスクリプトを書く
@@ -112,9 +122,6 @@ public class ShotCam : MonoBehaviour {
 
 //emlist[Zombie.cs][c#]{
   public void death() {
-    Invoke("destroyObject", 5f);　//5秒後に実行
-  }
-  void destroyObject() {
     Destroy(gameObject);  //オブジェクトを消す
   }
 //}
@@ -134,9 +141,86 @@ enemyタグはゾンビの胴体，手足，頭についておりclickObject.tra
 
 最後にゾンビ側のスクリプトZombie.csの関数deathを呼び出して一定時間後オブジェクトを消すようにしています．
 
-Zombie.csではn秒後に何かをする，という動作のためInvoke関数を使っています．これは第一引数に関数名，第二引数に秒数を指定することで指定秒数後に関数を呼び出す便利な機能です．
-そして呼び出す関数ではDestroyでゾンビ本体を丸ごと削除しています．
+Zombie.csではDestroyでゾンビ本体を丸ごと削除しています．
 
+シーンのカメラに見える位置にゾンビを設置し，Unityの三角ボタンで実行してみましょう．
+クリックしてゾンビが消滅すれば現状はOKです．
 
-===[column] Unityで使われるクラス
-Vector3は3D空間のベクトルを扱うための関数です．x,y,zの要素を持っています．
+== ゾンビが歩くようにする
+ゾンビをプレイヤーまで歩かせるために，経路に沿って移動していくAgentとアニメーションとして体が動くAnimationの二つの機能を使います．
+=== 経路探索AIの実装
+Unityには嬉しいことに経路探索AIが自動で入っています．まず，ゾンビに「Nav Mesh Agent」のコンポーネントを追加し図のように設定します．
+//image[1_8][Nav Mesh Agentの設定][scale=0.7]{
+//}
+次にTerrainに経路探索のために必要な作業をします．Terrainを選択するとインスペクタの隣に「Navigation」というタブが出てきます．
+選択し「Bake」からパラメータを調整してBakeすることでゾンビが歩ける場所が青く表示されます．
+
+なお，試しに障害物として画像ではCubeを置いていますがインスペクタから「static」にチェックを入れるのを忘れないようにしてください．
+//image[1_9][経路となる領域をBakeした様子][scale=0.9]{
+//}
+
+=== アニメーション遷移の実装
+移動中には歩くアニメーション，止まるときには待機のアニメーションを適用するためAnimationの設定をします．
+
+※ちゃんと書く
+//image[1_10][経路となる領域をBakeした様子][scale=0.9]{
+//}
+
+=== スクリプトを書き換える
+経路探索のためにAI機能をインポートします
+//emlist[Zombie.cs][c#]{
+  using UnityEngine.AI;
+//}
+そして以下のようにガラッと書き換えていきます
+//emlist[Zombie.cs][c#]{
+  public class Zombie : MonoBehaviour {
+  private new GameObject camera;
+  private NavMeshAgent agent;
+  private bool stop;
+  private enum state { walk,idle,atack }  //アニメーションの状態
+  private Animator animator;
+  void Start() {
+    camera = GameObject.Find("Main Camera").gameObject;
+    agent = GetComponent<NavMeshAgent>();
+    agent.SetDestination(camera.transform.position);  //目標座標を設定
+    stop = false;
+    animator = GetComponent<Animator>();
+  }
+  void Update() {
+    //ゾンビが目標点まで2m近づいたら立ち止まる
+    if (!stop && Vector3.Distance(camera.transform.position, this.transform.position) < 2f) {
+      animator.SetInteger("state", (int)state.idle);
+      Vector3 p = camera.transform.position;
+      p.y = this.transform.position.y;
+      transform.LookAt(p);
+      agent.isStopped = stop = true;
+    }
+    else {
+      //animator.SetInteger("state", (int)state.walk);
+    }
+  }
+  //死ぬ処理
+  public void death() {
+    GetComponent<Animator>().enabled = false; //アニメーション無効
+    Invoke("destroyObject", 5f);　//5秒後に消滅させる
+    SetKinematic(false);  //物理演算を付ける
+    agent.enabled = false;
+  }
+  void destroyObject() {
+    Destroy(gameObject);  //オブジェクトを消す
+  }
+
+  public void SetKinematic(bool newValue) {
+    Component[] components = GetComponentsInChildren(typeof(Rigidbody));
+    foreach (Component c in components) {
+      (c as Rigidbody).isKinematic = newValue;
+    }
+  }
+}
+//}
+
+== エフェクトを付ける
+warFX?とか
+
+===[column] タイトル
+ここにコラムをかける

@@ -8,5 +8,12 @@ standerd assetsのインポート(environmentとparticle,カメラのみ)
 コミット
 terrainの設置(standard assetからテクスチャを適用)
 
+スクリプトを書く
+
+
+Navmeshとアニメーションの適用
+スクリプトを書き換える
+　isなんちゃらで物理演算切り替え
 
 War FXのインポート
+カメラショットでエフェクトを付ける記述追加
