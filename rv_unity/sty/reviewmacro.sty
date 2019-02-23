@@ -26,3 +26,21 @@
     \interlinepenalty\@M
     \Huge \headfont #1\par\nobreak
     \vskip 3\Cvs}} % 欧文は40pt
+
+\newcommand{\tableofcontents}{%
+  \settowidth\jsc@tocl@width{\headfont\prechaptername\postchaptername}%
+  \settowidth\@tempdima{\headfont\appendixname}%
+  \ifdim\jsc@tocl@width<\@tempdima \setlength\jsc@tocl@width{\@tempdima}\fi
+  \ifdim\jsc@tocl@width<2zw \divide\jsc@tocl@width by 2 \advance\jsc@tocl@width 1zw\fi
+  \if@twocolumn
+    \@restonecoltrue\onecolumn
+  \else
+    \@restonecolfalse
+  \fi
+  \clearpage
+  \plainifnotempty
+  \@makechapterhead{\contentsname}
+  \@mkboth{\contentsname}{}%
+  \@starttoc{toc}%
+  \if@restonecol\twocolumn\fi
+}

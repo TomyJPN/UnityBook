@@ -94,13 +94,11 @@ public class ShotCam : MonoBehaviour {
     GameObject clickObject=getClickObject();
     //クリックしたのが敵なら
     if (clickObject!=null && clickObject.gameObject.tag == "enemy") {
-      //アニメーション無効
-      clickObject.transform.root.GetComponent<Animator>().enabled = false;  
       Vector3 vec = clickObject.transform.position - this.transform.position;
       //射撃した部位に力を加える
-      clickObject.GetComponent<Rigidbody>().velocity = vec.normalized*15;
+      clickObject.GetComponent<Rigidbody>().velocity = vec.normalized*30;
       //ゾンビ側のスクリプトのdeath()呼び出し
-      clickObject.transform.root.GetComponent<Zombie>().death();  
+      clickObject.transform.root.GetComponent<Zombie>().death();
     }
   }
   // 左クリックしたオブジェクトを取得する関数
@@ -112,6 +110,7 @@ public class ShotCam : MonoBehaviour {
       if (Physics.SphereCast(ray, 0.1f, out hit)) {
         clickObject = hit.collider.gameObject;
       }
+      Debug.Log(clickObject);
     }
     return clickObject;
   }
@@ -122,6 +121,10 @@ public class ShotCam : MonoBehaviour {
 
 //emlist[Zombie.cs][c#]{
   public void death() {
+    GetComponent<Animator>().enabled = false; //アニメーション無効
+    Invoke("destroyObject", 5f);　//5秒後に消滅させる
+  }
+  void destroyObject() {
     Destroy(gameObject);  //オブジェクトを消す
   }
 //}
@@ -131,20 +134,21 @@ public class ShotCam : MonoBehaviour {
 
 getClickObject関数は左クリックされると画面上にRayと呼ばれるレーザーのような線を出し，衝突したオブジェクトを取得しreturnで返しています．
 毎フレーム呼び出されるUpdate関数ではgetClickObject関数でクリックしたオブジェクトを検知し続け，if文にてenemyタグが付いているかを判別します．
-enemyタグはゾンビの胴体，手足，頭についておりclickObject.transform.rootでいずれからも一番上の階層のオブジェクト「Zombie」のアニメーションを参照でき，無効にしています．
 
 変数vecは撃った部位に力を加えて吹き飛ぶ演出をするためのベクトルを保持しています．撃った部位の座標からゲーム画面を映すカメラの座標を減算することでベクトルが取得できます．
 そしてnormalizedで単位ベクトル化しRigidbodyコンポーネントで力を加えています．「*15」は力の大きさです．試しに大きくして遊んだり自分好みの値にしてみるのもいいでしょう．
 
-ベクトルが分からない，という人もいるかと思いますが下の図の「矢印」がベクトルだと思ってください．ベクトルは方向と力の情報を持っていて座標点b-座標点aでaからbへのベクトルになります．
-その「矢印」をゾンビ撃った部位に付けることでその点に力が加わる，ということになります．
+#@#ベクトルが分からない，という人もいるかと思いますが下の図の「矢印」がベクトルだと思ってください．ベクトルは方向と力の情報を持っていて座標点b-座標点aでaからbへのベクトルになります．
+#@#その「矢印」をゾンビ撃った部位に付けることでその点に力が加わる，ということになります．
+enemyタグはゾンビの胴体，手足，頭につけているのでclickObject.transform.rootでいずれからも一番上の階層のオブジェクトからZombie.csの関数deathを呼び出せます．
 
-最後にゾンビ側のスクリプトZombie.csの関数deathを呼び出して一定時間後オブジェクトを消すようにしています．
-
-Zombie.csではDestroyでゾンビ本体を丸ごと削除しています．
+関数deathが呼び出されるとアニメーションを無効にして5秒後に消す処理を行います．アニメーションが無効になると魂が抜けたようにふっと体が崩れ(=ラグドールにより倒れ)ます．
 
 シーンのカメラに見える位置にゾンビを設置し，Unityの三角ボタンで実行してみましょう．
-クリックしてゾンビが消滅すれば現状はOKです．
+クリックするとゾンビが吹き飛ぶとOKです．
+//image[1_6_3][実行結果(クリックすると倒れる)][scale=1]{
+//}
+
 
 == ゾンビが歩くようにする
 ゾンビをプレイヤーまで歩かせるために，経路に沿って移動していくAgentとアニメーションとして体が動くAnimationの二つの機能を使います．
@@ -161,9 +165,11 @@ Unityには嬉しいことに経路探索AIが自動で入っています．ま�
 
 === アニメーション遷移の実装
 移動中には歩くアニメーション，止まるときには待機のアニメーションを適用するためAnimationの設定をします．
+アセットにwalk,idle,atackのアニメーションが含まれているのでノードと遷移を設定します．
+矢印はノードを右クリックし，「Make Transition」を選択します．
+矢印を選択したときにインスペクタに表示されるConditionsで「state」と名付けた遷移条件変数を追加しwalkへの矢印にはEquals0,idleへはEquals1,attackへはEquals2を割り当てます．
 
-※ちゃんと書く
-//image[1_10][経路となる領域をBakeした様子][scale=0.9]{
+//image[1_10][Animatorの設定][scale=1]{
 //}
 
 === スクリプトを書き換える
@@ -171,7 +177,7 @@ Unityには嬉しいことに経路探索AIが自動で入っています．ま�
 //emlist[Zombie.cs][c#]{
   using UnityEngine.AI;
 //}
-そして以下のようにガラッと書き換えていきます
+そして以下のように書き換えていきます
 //emlist[Zombie.cs][c#]{
   public class Zombie : MonoBehaviour {
   private new GameObject camera;
@@ -188,7 +194,9 @@ Unityには嬉しいことに経路探索AIが自動で入っています．ま�
   }
   void Update() {
     //ゾンビが目標点まで2m近づいたら立ち止まる
-    if (!stop && Vector3.Distance(camera.transform.position, this.transform.position) < 2f) {
+    if (!stop && 
+        Vector3.Distance(camera.transform.position, this.transform.position) < 2f) 
+    {
       animator.SetInteger("state", (int)state.idle);
       Vector3 p = camera.transform.position;
       p.y = this.transform.position.y;
@@ -219,8 +227,13 @@ Unityには嬉しいことに経路探索AIが自動で入っています．ま�
 }
 //}
 
-== エフェクトを付ける
-warFX?とか
+
+これでプレビューを実行してみると，ゾンビがカメラに向かって歩きだし，近づくと立ち止まります．
+また，撃つと
+
+//embed[latex]{
+\clearpage
+//}
 
 ===[column] タイトル
 ここにコラムをかける

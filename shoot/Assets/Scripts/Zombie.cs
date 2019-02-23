@@ -4,13 +4,6 @@ using UnityEngine;
 using UnityEngine.AI;
 
 public class Zombie : MonoBehaviour {
-  public void death() {
-    Destroy(gameObject);  //オブジェクトを消す
-  }
-  void destroyObject() {
-    Destroy(gameObject);  //オブジェクトを消す
-  }
-  /*
   private new GameObject camera;
   private NavMeshAgent agent;
   private bool stop;
@@ -52,5 +45,16 @@ public class Zombie : MonoBehaviour {
     foreach (Component c in components) {
       (c as Rigidbody).isKinematic = newValue;
     }
-  }*/
+  }
 }
+
+
+/*
+ public void death() {
+    GetComponent<Animator>().enabled = false; //アニメーション無効
+    Invoke("destroyObject", 5f);　//5秒後に消滅させる
+  }
+  void destroyObject() {
+    Destroy(gameObject);  //オブジェクトを消す
+  }
+   */
