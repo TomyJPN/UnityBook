@@ -151,7 +151,7 @@ enemyタグはゾンビの胴体，手足，頭につけているのでclickObje
 
 
 == ゾンビが歩くようにする
-ゾンビをプレイヤーまで歩かせるために，経路に沿って移動していくAgentとアニメーションとして体が動くAnimationの二つの機能を使います．
+ゾンビをプレイヤーまで歩かせるために，経路に沿って移動していくAgentとアニメーションとして体が動くAnimatorの二つの機能を使います．
 === 経路探索AIの実装
 Unityには嬉しいことに経路探索AIが自動で入っています．まず，ゾンビに「Nav Mesh Agent」のコンポーネントを追加し図のように設定します．
 //image[1_8][Nav Mesh Agentの設定][scale=0.7]{
@@ -164,7 +164,7 @@ Unityには嬉しいことに経路探索AIが自動で入っています．ま�
 //}
 
 === アニメーション遷移の実装
-移動中には歩くアニメーション，止まるときには待機のアニメーションを適用するためAnimationの設定をします．
+移動中には歩くアニメーション，止まるときには待機のアニメーションを適用するためAnimatorの設定をします．
 アセットにwalk,idle,atackのアニメーションが含まれているのでノードと遷移を設定します．
 矢印はノードを右クリックし，「Make Transition」を選択します．
 矢印を選択したときにインスペクタに表示されるConditionsで「state」と名付けた遷移条件変数を追加しwalkへの矢印にはEquals0,idleへはEquals1,attackへはEquals2を割り当てます．
@@ -191,6 +191,7 @@ Unityには嬉しいことに経路探索AIが自動で入っています．ま�
     agent.SetDestination(camera.transform.position);  //目標座標を設定
     stop = false;
     animator = GetComponent<Animator>();
+    SetKinematic(true);  //物理演算を無効にする
   }
   void Update() {
     //ゾンビが目標点まで2m近づいたら立ち止まる
@@ -202,9 +203,6 @@ Unityには嬉しいことに経路探索AIが自動で入っています．ま�
       p.y = this.transform.position.y;
       transform.LookAt(p);
       agent.isStopped = stop = true;
-    }
-    else {
-      //animator.SetInteger("state", (int)state.walk);
     }
   }
   //死ぬ処理
@@ -227,9 +225,19 @@ Unityには嬉しいことに経路探索AIが自動で入っています．ま�
 }
 //}
 
+=== プログラム解説
+Start関数ではゾンビが目的地とするカメラの取得と座標設定，Animatorの取得をしています．
+
+Update関数ではゾンビがカメラまで近づいたら動作する処理があり，stateを待機(idle)にアニメーションを切り替え
+カメラの方向を向き，移動を停止しています．
+
+そしてdeath関数の変更とSetKinematicという関数の追加も行っています．これは，NavMesh AgentとAnimator，ラグドールを併用したために必要となったプログラムです．
+公式ドキュメントでは，NavMesh AgentはPhysicsと合わせて使用するのを非推奨としています．キャラの動きをNavMesh Agentで行っているのにそれに物理トリガを加えたりアニメーション動作を加えると競合してしまうからです．
+そこで，NavMesh Agentで動かしている，すなわちゾンビが生きている(?)状態ではRigidbodyのIs Kinematicをオンにして物理演算を無効にし，撃たれて死ぬ状態ではNavMesh AgentをオフにしつつIs Kinematicをオンにすることでラグドールを動作させるやり方にしています．
+SetKinematic関数はそのために子オブジェクトが持つRigidbodyコンポーネント全ての物理演算を切り替えるものです．
+
 
 これでプレビューを実行してみると，ゾンビがカメラに向かって歩きだし，近づくと立ち止まります．
-また，撃つと
 
 //embed[latex]{
 \clearpage

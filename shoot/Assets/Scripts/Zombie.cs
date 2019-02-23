@@ -15,6 +15,7 @@ public class Zombie : MonoBehaviour {
     agent.SetDestination(camera.transform.position);  //目標座標を設定
     stop = false;
     animator = GetComponent<Animator>();
+    SetKinematic(true);  //物理演算を無効にする
   }
   void Update() {
     //ゾンビが目標点まで2m近づいたら立ち止まる
