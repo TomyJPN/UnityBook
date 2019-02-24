@@ -7,8 +7,11 @@ public class Zombie : MonoBehaviour {
   private new GameObject camera;
   private NavMeshAgent agent;
   private bool stop;
-  private enum state { walk,idle,atack }  //アニメーションの状態
+  private enum state {walk,idle}  //アニメーションの状態
   private Animator animator;
+  private float timeOut;
+  private float timeElapsed;
+
   void Start() {
     camera = GameObject.Find("Main Camera").gameObject;
     agent = GetComponent<NavMeshAgent>();
@@ -16,8 +19,16 @@ public class Zombie : MonoBehaviour {
     stop = false;
     animator = GetComponent<Animator>();
     SetKinematic(true);  //物理演算を無効にする
+    timeOut = 3f;
   }
   void Update() {
+    timeElapsed += Time.deltaTime;
+    if (timeElapsed >= timeOut && stop) {
+      animator.SetTrigger("attack");
+      timeElapsed = 0.0f;
+      Invoke("damage", 0.9f);
+    }
+
     //ゾンビが目標点まで2m近づいたら立ち止まる
     if (!stop && Vector3.Distance(camera.transform.position, this.transform.position) < 2f) {
       animator.SetInteger("state", (int)state.idle);
@@ -25,9 +36,6 @@ public class Zombie : MonoBehaviour {
       p.y = this.transform.position.y;
       transform.LookAt(p);
       agent.isStopped = stop = true;
-    }
-    else {
-      //animator.SetInteger("state", (int)state.walk);
     }
   }
   //死ぬ処理
@@ -45,6 +53,13 @@ public class Zombie : MonoBehaviour {
     Component[] components = GetComponentsInChildren(typeof(Rigidbody));
     foreach (Component c in components) {
       (c as Rigidbody).isKinematic = newValue;
+    }
+  }
+
+  void damage() {
+    //ゾンビが死んでいたら無効
+    if (agent.enabled) { 
+      iTween.ShakePosition(camera, iTween.Hash("x", 0.1f,"y",0.1f, "time", 1f));
     }
   }
 }

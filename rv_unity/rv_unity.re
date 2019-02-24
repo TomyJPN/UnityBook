@@ -151,7 +151,7 @@ enemyタグはゾンビの胴体，手足，頭につけているのでclickObje
 //}
 
 
-== ゾンビが歩くようにする
+== ゾンビを歩かせる
 ゾンビをプレイヤーまで歩かせるために，経路に沿って移動していくAgentとアニメーションとして体が動くAnimatorの二つの機能を使います．
 === 経路探索AIの実装
 Unityには嬉しいことに経路探索AIが自動で入っています．まず，ゾンビに「Nav Mesh Agent」のコンポーネントを追加し図のように設定します．
@@ -168,7 +168,13 @@ Unityには嬉しいことに経路探索AIが自動で入っています．ま�
 移動中には歩くアニメーション，止まるときには待機のアニメーションを適用するためAnimatorの設定をします．
 アセットにwalk,idle,atackのアニメーションが含まれているのでノードと遷移を設定します．
 矢印はノードを右クリックし，「Make Transition」を選択します．
-矢印を選択したときにインスペクタに表示されるConditionsで「state」と名付けた遷移条件変数を追加しwalkへの矢印にはEquals 0,idleへはEquals 1,attackへはEquals 2を割り当てます．
+矢印を選択したときにインスペクタに表示されるConditionsで「state」と名付けたint型の遷移条件変数を追加しwalkへの矢印にはEquals 0,idleへはEquals 1を割り当てます．
+遷移条件変数はAnimatorウィンドウ左のParametersで「＋」マークを押すと作成できます．
+
+また，矢印を選択したときにインスペクタに表示される@<b>{「Has Exit Time」のチェックは外してください}．これはstateの変更があった時にアニメーションを中断してすぐに切り替えるためです．
+チェックが付いたままだと，例えばゾンビが立ち止まったのにアニメーションでは一瞬歩く動作のままで滑るような動きになってしまいます．
+
+攻撃アニメーションのノード「attack」に関しては後で実装するので今は矢印を付けなくていいです．
 
 //image[1_10][Animatorの設定][scale=1]{
 //}
@@ -184,7 +190,7 @@ Unityには嬉しいことに経路探索AIが自動で入っています．ま�
   private new GameObject camera;
   private NavMeshAgent agent;
   private bool stop;
-  private enum state { walk,idle,atack }  //アニメーションの状態
+  private enum state { walk,idle}  //アニメーションの状態
   private Animator animator;
   void Start() {
     camera = GameObject.Find("Main Camera").gameObject;
@@ -237,8 +243,68 @@ Update関数ではゾンビがカメラまで近づいたら動作する処理�
 そこで，NavMesh Agentで動かしている，すなわちゾンビが生きている(?)状態ではRigidbodyのIs Kinematicをオンにして物理演算を無効にし，撃たれて死ぬ状態ではNavMesh AgentをオフにしつつIs Kinematicをオンにすることでラグドールを動作させるやり方にしています．
 SetKinematic関数はそのために子オブジェクトが持つRigidbodyコンポーネント全ての物理演算を切り替えるものです．
 
-
 これでプレビューを実行してみると，ゾンビがカメラに向かって歩きだし，近づくと立ち止まります．
+
+== ゾンビを攻撃させる
+さて，現状ではゾンビがただプレイヤーにわらわら集まってくるだけです．ゾンビのモッシュですね．
+ですがゾンビはライブのパリピではなく人間を喰らう存在ですので，攻撃するよう実装していきましょう．
+
+=== animatorで攻撃の遷移を設定する
+attackに画像のように矢印を付けますが，attackへの遷移条件は「attack」Trrigerが呼び出されたときという設定になります．
+そしてattackからidle,waklへの遷移は「Has Exit Time」のチェックを付けるのみにします．
+
+//image[1_14][animatorの設定][scale=0.9]{
+//}
+//image[1_13][attackへの遷移条件][scale=0.9]{
+//}
+
+=== カメラの揺れ演出の準備
+ゾンビが攻撃するようになったのでプレイヤーもダメージを負う演出を加えます．
+ゾンビが攻撃するとカメラを揺らすのですが，一からコードを書くと面倒なのでiTweenというAssetを使おうと思います．
+これまでと同じように「iTween」とAsset Storeで検索，インポートしたら準備は完了です．
+
+=== プログラムを書き換える
+攻撃動作を付けるためにZombie.csを書き換えます．攻撃は指定秒ごとに行うようにするため以下のように時間を管理するメンバ変数を定義します．
+//emlist[Zombie.cs][c#]{
+  private float timeOut;
+  private float timeElapsed;
+//}
+そしてStart関数内にtimeOutの初期化を追加．
+//emlist[Zombie.cs][c#]{
+    timeOut = 3f;
+//}
+Update関数に以下のコードを追加します
+//emlist[Zombie.cs][c#]{
+    timeElapsed += Time.deltaTime;
+    if (timeElapsed >= timeOut && stop) {
+      animator.SetTrigger("attack");
+      timeElapsed = 0.0f;
+      Invoke("damage", 0.9f);
+    }
+//}
+最後に，以下の関数を追加します．
+//emlist[Zombie.cs][c#]{
+  void damage() {
+    //ゾンビが死んでいたら無効
+    if (agent.enabled) { 
+      iTween.ShakePosition(camera, iTween.Hash("x", 0.1f,"y",0.1f, "time", 1f));
+    }
+  }
+//}
+
+=== プログラム解説
+Time.deltaTimeには、最後のフレームからの経過時間[ms]が格納されています。
+Update()が実行されるたびに経過時間を積み上げていき、指定した時間を超えたら望みの処理を実行するようにします。
+
+ゾンビが攻撃をしたらアニメーションが開始されますが開始から0.9秒後と指定してカメラをiTweenで揺らしています．
+0.9秒は攻撃アニメーションが開始されてから引っ搔かれてダメージを追うのに丁度いい時間になっています．
+
+しかし，この仕様のままだと”攻撃アニメーションが開始”された後から0.9秒以内にゾンビを撃った場合，ゾンビが倒れたのにダメージ演出が呼び出されてしまいます．
+そこで，NavMesh Agentが有効かどうかでif判定を行っています．フラグ変数を作ってもいいのですが，簡略化のためこのようにしました．
+
+===[column] 便利なiTween
+めっちゃ便利～～～～～～！
+position,rotate色々
 
 == エフェクトを付ける
 ゲームの見栄えを良くするためにエフェクトを使うことは効果的です．
@@ -273,6 +339,15 @@ if (Physics.SphereCast(ray, 0.1f, out hit)) {
 //image[1_12][War Fx][scale=0.9]{
 //}
 
+=== 動作確認
+さて，ラグドール，アニメーション，Navmesh Agent，エフェクトなど様々な実装をしましたが，いかがだったでしょうか．
+Null参照などのエラーが出る場合，コンソールをダブルクリックすることで原因となる処理のソースが分かることもあります．
+
+正しく実行できている場合，図のようにゾンビが経路に従い歩き，カメラに近づくと攻撃，カメラが揺れます．
+ゾンビを撃つと火花のエフェクトとともにゾンビが吹き飛びます．
+
+//image[1_15][実行結果][scale=1]{
+//}
 
 //embed[latex]{
 \clearpage
