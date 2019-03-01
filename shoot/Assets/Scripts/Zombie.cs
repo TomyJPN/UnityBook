@@ -19,27 +19,27 @@ public class Zombie : MonoBehaviour {
     animator = GetComponent<Animator>();
     SetKinematic(true);  //物理演算を無効にする
 
-    attackTimer = new Timer();
+    attackTimer = gameObject.AddComponent<Timer>();
     attackTimer.Interval = 3f;
     attackTimer.Tick += AttackTimer_Tick;
+    attackTimer.TimerStop();
   }
 
   private void AttackTimer_Tick(object sender, System.EventArgs e) {
-    if (stop) {
       animator.SetTrigger("attack");
       Invoke("damage", 0.9f);
-    }
   }
-
-
+  
   void Update() {
     //ゾンビが目標点まで2m近づいたら立ち止まる
-    if (!stop && Vector3.Distance(camera.transform.position, this.transform.position) < 2f) {
+    if (!attackTimer.TimerEnabled && Vector3.Distance(camera.transform.position, this.transform.position) < 2f) {
       animator.SetInteger("state", (int)state.idle);
       Vector3 p = camera.transform.position;
       p.y = this.transform.position.y;
       transform.LookAt(p);
-      agent.isStopped = stop = true;
+      agent.isStopped = true;
+
+      attackTimer.TimerStartAndInvoke();
     }
   }
   //死ぬ処理
