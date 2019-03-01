@@ -2,25 +2,41 @@
 using UnityEngine;
 
 public class Timer : MonoBehaviour {
+  /// <summary>
+  /// 時間の間隔[s]
+  /// </summary>
   public float Interval { get; set; }
-  private float elapsed = 0f;
-  private bool timerEnabled = true;
 
+  /// <summary>
+  /// 経過時間
+  /// </summary>
+  private float elapsed = 0f;
+
+  public bool TimerEnabled { get; private set; }
+  
   public void ReStart() {
     elapsed = 0f;
     TimerStart();
   }
-
+  
   public void TimerStart() {
-    timerEnabled = true;
+    TimerEnabled = true;
   }
 
   public void TimerStop() {
-    timerEnabled = false;
+    TimerEnabled = false;
+  }
+
+  /// <summary>
+  /// 開始しつつ、時間経過したときのイベントを呼び出す
+  /// </summary>
+  public void TimerStartAndInvoke() {
+    TimerStart();
+    Tick.Invoke(this, new EventArgs());
   }
 
   void Update() {
-    if (!timerEnabled) {
+    if (!TimerEnabled) {
       return;
     }
 
@@ -32,5 +48,8 @@ public class Timer : MonoBehaviour {
     }
   }
 
+  /// <summary>
+  /// 時間が経過したときのイベント
+  /// </summary>
   public event EventHandler Tick;
 }
