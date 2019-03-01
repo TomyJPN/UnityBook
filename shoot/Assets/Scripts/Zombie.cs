@@ -9,8 +9,7 @@ public class Zombie : MonoBehaviour {
   private bool stop;
   private enum state {walk,idle}  //アニメーションの状態
   private Animator animator;
-  private float timeOut;
-  private float timeElapsed;
+  private Timer attackTimer;
 
   void Start() {
     camera = GameObject.Find("Main Camera").gameObject;
@@ -19,16 +18,21 @@ public class Zombie : MonoBehaviour {
     stop = false;
     animator = GetComponent<Animator>();
     SetKinematic(true);  //物理演算を無効にする
-    timeOut = 3f;
+
+    attackTimer = new Timer();
+    attackTimer.Interval = 3f;
+    attackTimer.Tick += AttackTimer_Tick;
   }
-  void Update() {
-    timeElapsed += Time.deltaTime;
-    if (timeElapsed >= timeOut && stop) {
+
+  private void AttackTimer_Tick(object sender, System.EventArgs e) {
+    if (stop) {
       animator.SetTrigger("attack");
-      timeElapsed = 0.0f;
       Invoke("damage", 0.9f);
     }
+  }
 
+
+  void Update() {
     //ゾンビが目標点まで2m近づいたら立ち止まる
     if (!stop && Vector3.Distance(camera.transform.position, this.transform.position) < 2f) {
       animator.SetInteger("state", (int)state.idle);
