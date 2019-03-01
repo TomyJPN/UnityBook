@@ -6,6 +6,9 @@ Unity本用テストアプリ制作
 ## 説明
 Unityを用いたアーケードゲーム制作を紹介する技術同人誌です．高専カンファレンスin西京2にだすぞだすぞだすぞ
 
+## レビュワーの方へ
+協力ありがとうございます．ディレクトリ構成で書いてはいますが，基本的に「rv_unity>rv_unity.re」，「rv_unity>UnityBook.pdf」，「shoot>Assets>Scripts」をご覧いただければと思います．
+
 ## ディレクトリ構成
 ### rv_utniy
 「rv_unity」はRe:View構成フォルダで，「rv_unity.re」が原稿になります．Re:View原稿は単なるテキストデータなので普通のエディタで開くことができます．
