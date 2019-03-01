@@ -90,15 +90,17 @@ public class ShotCam : MonoBehaviour {
   void Start() {
   }
   void Update() {
-    GameObject clickObject=getClickObject();
-    //クリックしたのが敵なら
-    if (clickObject!=null && clickObject.gameObject.tag == "enemy") {
-      Vector3 vec = clickObject.transform.position - this.transform.position;
-      //射撃した部位に力を加える
-      clickObject.GetComponent<Rigidbody>().velocity = vec.normalized*30;
-      //ゾンビ側のスクリプトのdeath()呼び出し
-      clickObject.transform.root.GetComponent<Zombie>().death();
+    GameObject clickObject = getClickObject();
+    if (clickObject == null || clickObject.gameObject.tag != "enemy") {
+      return;
     }
+
+    //クリックしたのが敵なら
+    Vector3 vec = clickObject.transform.position - this.transform.position;
+    //射撃した部位に力を加える
+    clickObject.GetComponent<Rigidbody>().velocity = vec.normalized * 30;
+    //ゾンビ側のスクリプトのdeath()呼び出し
+    clickObject.transform.root.GetComponent<Zombie>().death();
   }
   // 左クリックしたオブジェクトを取得する関数
   public GameObject getClickObject() {
@@ -185,49 +187,51 @@ Unityには嬉しいことに経路探索AIが自動で入っています．ま�
 そして以下のように書き換えていきます
 //emlist[Zombie.cs][c#]{
   public class Zombie : MonoBehaviour {
-  private new GameObject camera;
-  private NavMeshAgent agent;
-  private bool stop;
-  private enum state { walk,idle}  //アニメーションの状態
-  private Animator animator;
-  void Start() {
-    camera = GameObject.Find("Main Camera").gameObject;
-    agent = GetComponent<NavMeshAgent>();
-    agent.SetDestination(camera.transform.position);  //目標座標を設定
-    stop = false;
-    animator = GetComponent<Animator>();
-    SetKinematic(true);  //物理演算を無効にする
-  }
-  void Update() {
-    //ゾンビが目標点まで2m近づいたら立ち止まる
-    if (!stop && 
-        Vector3.Distance(camera.transform.position, this.transform.position) < 2f) 
-    {
+    private new GameObject camera;
+    private NavMeshAgent agent;
+    private bool stop;
+    private enum state { walk, idle }  //アニメーションの状態
+    private Animator animator;
+    void Start() {
+      camera = GameObject.Find("Main Camera").gameObject;
+      agent = GetComponent<NavMeshAgent>();
+      agent.SetDestination(camera.transform.position);  //目標座標を設定
+      stop = false;
+      animator = GetComponent<Animator>();
+      SetKinematic(true);  //物理演算を無効にする
+    }
+    void Update() {
+      //ゾンビが目標点まで2m近づいたら立ち止まる
+      if (stop ||
+          Vector3.Distance(camera.transform.position, this.transform.position) >= 2f) 
+      {
+        return;
+      }
+
       animator.SetInteger("state", (int)state.idle);
       Vector3 p = camera.transform.position;
       p.y = this.transform.position.y;
       transform.LookAt(p);
       agent.isStopped = stop = true;
     }
-  }
-  //死ぬ処理
-  public void death() {
-    GetComponent<Animator>().enabled = false; //アニメーション無効
-    Invoke("destroyObject", 5f);　//5秒後に消滅させる
-    SetKinematic(false);  //物理演算を付ける
-    agent.enabled = false;
-  }
-  void destroyObject() {
-    Destroy(gameObject);  //オブジェクトを消す
-  }
-
-  public void SetKinematic(bool newValue) {
-    Component[] components = GetComponentsInChildren(typeof(Rigidbody));
-    foreach (Component c in components) {
-      (c as Rigidbody).isKinematic = newValue;
+    //死ぬ処理
+    public void death() {
+      GetComponent<Animator>().enabled = false; //アニメーション無効
+      Invoke("destroyObject", 5f);　//5秒後に消滅させる
+      SetKinematic(false);  //物理演算を付ける
+      agent.enabled = false;
+    }
+    void destroyObject() {
+      Destroy(gameObject);  //オブジェクトを消す
+    }
+  
+    public void SetKinematic(bool newValue) {
+      Component[] components = GetComponentsInChildren(typeof(Rigidbody));
+      foreach (Component c in components) {
+        (c as Rigidbody).isKinematic = newValue;
+      }
     }
   }
-}
 //}
 
 === プログラム解説
@@ -269,24 +273,28 @@ attackに画像のように矢印を付けますが，attackへの遷移条件�
 //}
 そしてStart関数内にtimeOutの初期化を追加．
 //emlist[Zombie.cs][c#]{
-    timeOut = 3f;
+  timeOut = 3f;
 //}
 Update関数に以下のコードを追加します
 //emlist[Zombie.cs][c#]{
-    timeElapsed += Time.deltaTime;
-    if (timeElapsed >= timeOut && stop) {
-      animator.SetTrigger("attack");
-      timeElapsed = 0.0f;
-      Invoke("damage", 0.9f);
-    }
+  timeElapsed += Time.deltaTime;
+  if (timeElapsed < timeOut || !stop) {
+    return;
+  }
+  
+  animator.SetTrigger("attack");
+  timeElapsed = 0.0f;
+  Invoke("damage", 0.9f);
 //}
 最後に，以下の関数を追加します．
 //emlist[Zombie.cs][c#]{
   void damage() {
     //ゾンビが死んでいたら無効
-    if (agent.enabled) { 
-      iTween.ShakePosition(camera, iTween.Hash("x", 0.1f,"y",0.1f, "time", 1f));
+    if (!agent.enabled) {
+      return;
     }
+
+    iTween.ShakePosition(camera, iTween.Hash("x", 0.1f, "y", 0.1f, "time", 1f));
   }
 //}
 
@@ -323,11 +331,11 @@ Asset Storeで「War Fx」と検索すると爆発や炎，銃撃などが入っ
 と宣言し，getClickObject関数内のif文に以下のように一行追加します
 
 //emlist[ShotCam.cs][c#]{
-if (Physics.SphereCast(ray, 0.1f, out hit)) {
-        clickObject = hit.collider.gameObject;
-        //[追加]着弾点エフェクト
-        Instantiate(hitEffect, hit.point, Quaternion.identity);
-      }
+  if (Physics.SphereCast(ray, 0.1f, out hit)) {
+    clickObject = hit.collider.gameObject;
+    //[追加]着弾点エフェクト
+    Instantiate(hitEffect, hit.point, Quaternion.identity);
+  }
 //}
 
 そしてhitEffectはpublicで宣言しているためMain Cameraのインスペクタから手動でアタッチする必要があります．
