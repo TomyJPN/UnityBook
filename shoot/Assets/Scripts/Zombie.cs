@@ -6,7 +6,6 @@ using UnityEngine.AI;
 public class Zombie : MonoBehaviour {
   private new GameObject camera;
   private NavMeshAgent agent;
-  private bool stop;
   private enum state {walk,idle}  //アニメーションの状態
   private Animator animator;
   private Timer attackTimer;
@@ -15,7 +14,6 @@ public class Zombie : MonoBehaviour {
     camera = GameObject.Find("Main Camera").gameObject;
     agent = GetComponent<NavMeshAgent>();
     agent.SetDestination(camera.transform.position);  //目標座標を設定
-    stop = false;
     animator = GetComponent<Animator>();
     SetKinematic(true);  //物理演算を無効にする
 
