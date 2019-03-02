@@ -22,7 +22,7 @@ language: ja
 
 # 書名
 # 読みを入れる例 booktitle: {name: "Re:VIEW EPUBサンプル", file-as: "リビューイーパブサンプル"}
-booktitle: Unityで作る アーケードゲーム入門
+booktitle: ㅤㅤㅤWiiリモコンで遊べるㅤㅤㅤUnityゲーム制作
 
 # 著者名。「, 」で区切って複数指定できる
 # 読みを入れる例 aut: [{name: "青木峰郎", file-as: "アオキミネロウ"}, {name: "武藤健志", file-as: "ムトウケンシ"}, {name: "高橋征義", file-as: "タカハシマサヨシ"}, {name: "角征典", file-as: "カドマサノリ"}]
@@ -111,7 +111,7 @@ toclevel: 2
 secnolevel: 2
 
 # 本文中に目次ページを作成するか。省略した場合はnull (作成しない)
-toc: false
+# toc: true
 
 # EPUB2標準の目次(NCX)以外に物理目次ファイルを作成するか。省略した場合はnull (作成しない)
 # ePUB3においてはこの設定によらず必ず作成される
