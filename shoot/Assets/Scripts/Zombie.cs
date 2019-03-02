@@ -11,6 +11,7 @@ public class Zombie : MonoBehaviour {
   private Animator animator;
   private float timeOut;
   private float timeElapsed;
+  Manager manager;
 
   void Start() {
     camera = GameObject.Find("Main Camera").gameObject;
@@ -20,6 +21,7 @@ public class Zombie : MonoBehaviour {
     animator = GetComponent<Animator>();
     SetKinematic(true);  //物理演算を無効にする
     timeOut = 3f;
+    manager = GameObject.Find("Manager").GetComponent<Manager>();
   }
   void Update() {
     timeElapsed += Time.deltaTime;
@@ -40,10 +42,12 @@ public class Zombie : MonoBehaviour {
   }
   //死ぬ処理
   public void death() {
+    if (!agent.enabled) return;
     GetComponent<Animator>().enabled = false; //アニメーション無効
     Invoke("destroyObject", 5f);　//5秒後に消滅させる
     SetKinematic(false);  //物理演算を付ける
     agent.enabled = false;
+    manager.scoreUP(100);
   }
   void destroyObject() {
     Destroy(gameObject);  //オブジェクトを消す
@@ -60,17 +64,7 @@ public class Zombie : MonoBehaviour {
     //ゾンビが死んでいたら無効
     if (agent.enabled) { 
       iTween.ShakePosition(camera, iTween.Hash("x", 0.1f,"y",0.1f, "time", 1f));
+      manager.lifeDown();
     }
   }
 }
-
-
-/*
- public void death() {
-    GetComponent<Animator>().enabled = false; //アニメーション無効
-    Invoke("destroyObject", 5f);　//5秒後に消滅させる
-  }
-  void destroyObject() {
-    Destroy(gameObject);  //オブジェクトを消す
-  }
-   */
