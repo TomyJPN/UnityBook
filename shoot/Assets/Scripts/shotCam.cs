@@ -28,7 +28,6 @@ public class ShotCam : MonoBehaviour {
         clickObject = hit.collider.gameObject;
         Instantiate(hitEffect, hit.point, Quaternion.identity);   //着弾点にエフェクト
       }
-      Debug.Log(clickObject);
     }
     return clickObject;
   }
